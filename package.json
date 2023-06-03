@@ -1,0 +1,37 @@
+{
+  "name": "@cto.af/linewrap-cli",
+  "version": "0.0.0",
+  "description": "Wrap lines using the Unicode Line Breaking algorithm from UAX #14",
+  "type": "module",
+  "bin": {
+    "linewrap": "bin/linewrap.js"
+  },
+  "scripts": {
+    "test": "c8 mocha",
+    "lint": "eslint . --ext js,cjs",
+    "build": "npm run lint && npm run test && npm pack --dry-run"
+  },
+  "keywords": [
+    "uax14",
+    "word-wrap",
+    "wordwrap",
+    "linebreak",
+    "unicode",
+    "grapheme",
+    "cluster",
+    "cli",
+    "command-line"
+  ],
+  "author": "Joe Hildebrand <joe-github@cursive.net>",
+  "license": "MIT",
+  "devDependencies": {
+    "@cto.af/eslint-config": "1.1.2",
+    "@types/node": "20.2.5",
+    "c8": "7.14.0",
+    "eslint": "8.41.0",
+    "mocha": "10.2.0"
+  },
+  "engines": {
+    "node": ">= 16"
+  }
+}
