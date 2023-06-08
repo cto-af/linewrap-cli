@@ -2,21 +2,24 @@
 /* eslint-disable no-console */
 
 import {LineWrap} from '@cto.af/linewrap'
+import {fileURLToPath} from 'url'
 import fs from 'fs'
 import os from 'os'
 import {parseArgsWithHelp} from 'minus-h'
+import {promisify} from 'util'
 
 /**
  * @type {Parameters<generateHelp>[0]}
  */
-const options = {
+const config = {
   options: {
     encoding: {
       short: 'e',
       type: 'string',
       default: 'utf8',
       argumentName: 'encoding',
-      description: 'encoding for files read or written.  stdout is always in the default encoding. (choices: "ascii", "utf8", "utf-8", "utf16le", "ucs2", "ucs-2", "base64", "base64url", "latin1", "binary", "hex")',
+      description: 'encoding for files read or written.  stdout is always in the default encoding.',
+      choices: ['ascii', 'utf8', 'utf-8', 'utf16le', 'ucs2', 'ucs-2', 'base64', 'base64url', 'latin1', 'binary', 'hex'],
     },
     html: {type: 'boolean', description: 'escape output for HTML'},
     indent: {
@@ -46,7 +49,8 @@ const options = {
       type: 'string',
       default: 'visible',
       argumentName: 'style',
-      description: 'what to do with words that are longer than width.  (choices: "visible", "clip", "anywhere")',
+      description: 'what to do with words that are longer than width.',
+      choices: ['visible', 'clip', 'anywhere'],
     },
     text: {
       short: 't',
@@ -58,7 +62,7 @@ const options = {
     width: {
       short: 'w',
       type: 'string',
-      default: String(process.stdout.columns),
+      default: String(process.stdout.columns ?? 80),
       argumentName: 'columns',
       description: 'maximum line length',
     },
@@ -69,39 +73,19 @@ const options = {
   description: 'Wrap some text, either from file, stdin, or given on the command line.  Each chunk of text is wrapped independently from one another, and streamed to stdout (or an outFile, if given).  Command line arguments with -t/--text are processed before files.',
 }
 
-const {
-  values: opts,
-  positionals: args,
-} = parseArgsWithHelp(options)
-
-if ((opts.text.length === 0) && (args.length === 0)) {
-  args.push('-')
-}
-
-const overflow = {
-  visible: LineWrap.OVERFLOW_VISIBLE,
-  clip: LineWrap.OVERFLOW_CLIP,
-  anywhere: LineWrap.OVERFLOW_ANYWHERE,
-}[opts.overflow]
-
-if (!overflow) {
-  console.error(`Invalid overflow type "${opts.overflow}".  Must be one of "visible", "clip", or "anywhere".`)
-  process.exit(64)
-}
-
 /**
  * Read stdin to completion with the configured encoding.
  *
  * @returns {Promise<string>}
  */
-function readStdin() {
+function readStdin(opts, stream) {
   // Below, d will be a string
-  process.stdin.setEncoding(opts.encoding)
+  stream.setEncoding(opts.encoding)
   return new Promise((resolve, reject) => {
     let s = ''
-    process.stdin.on('data', d => (s += d))
-    process.stdin.on('end', () => resolve(s))
-    process.stdin.on('error', reject)
+    stream.on('data', d => (s += d))
+    stream.on('end', () => resolve(s))
+    stream.on('error', reject)
   })
 }
 
@@ -125,40 +109,71 @@ function htmlEscape(str) {
   return str.replace(/[&<>\xA0]/g, m => ESCAPES[m])
 }
 
-const outstream = opts.outFile ?
-  fs.createWriteStream(opts.outFile, opts.encoding) :
-  process.stdout // Don't set encoding, will confuse terminal.
+const {
+  exit, stdin, stdout, stderr,
+} = process
 
-async function main() {
-  const w = new LineWrap({
-    escape: opts.html ? htmlEscape : s => s,
-    width: parseInt(opts.width, 10),
-    locale: opts.locale,
-    indent: parseInt(opts.indent, 10) || opts.indent,
-    indentFirst: !opts.outdentFirst,
-    newline: os.EOL,
-    overflow,
-    trim: !opts.noTrim,
+export async function main(
+  extraConfig,
+  options,
+  process = {exit, stdin, stdout, stderr}
+) {
+  const {values, positionals} = parseArgsWithHelp({
+    ...config,
+    ...extraConfig,
+  }, {
+    width: config.options.width.default,
+    ...options,
   })
 
-  for (const t of opts.text) {
+  if ((values.text.length === 0) && (positionals.length === 0)) {
+    positionals.push('-')
+  }
+
+  /** @type synbol */
+  const overflow = {
+    visible: LineWrap.OVERFLOW_VISIBLE,
+    clip: LineWrap.OVERFLOW_CLIP,
+    anywhere: LineWrap.OVERFLOW_ANYWHERE,
+  }[values.overflow]
+
+  const outstream = values.outFile ?
+    fs.createWriteStream(values.outFile, values.encoding) :
+    process.stdout // Don't set encoding, will confuse terminal.
+
+  const w = new LineWrap({
+    escape: values.html ? htmlEscape : s => s,
+    width: parseInt(values.width, 10),
+    locale: values.locale,
+    indent: parseInt(values.indent, 10) || values.indent,
+    indentFirst: !values.outdentFirst,
+    newline: os.EOL,
+    overflow,
+    trim: !values.noTrim,
+  })
+
+  for (const t of values.text) {
     outstream.write(w.wrap(t))
     outstream.write(os.EOL)
   }
 
-  for (const f of args) {
+  for (const f of positionals) {
     const t = f === '-' ?
-      await readStdin() :
-      await fs.promises.readFile(f, opts.encoding)
+      await readStdin(values, process.stdin) :
+      await fs.promises.readFile(f, values.encoding)
 
     outstream.write(w.wrap(t))
     outstream.write(os.EOL)
   }
 
-  outstream.end()
+  // Be careful to wait for the file to close, to ensure tests run
+  // correctly.
+  await promisify(outstream.end.bind(outstream))()
 }
 
-main().catch(e => {
-  console.log(e.message)
-  process.exit(1)
-})
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().catch(e => {
+    console.error(e)
+    process.exit(1)
+  })
+}
