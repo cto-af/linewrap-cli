@@ -196,7 +196,6 @@ describe('cli', () => {
     )
     assert.equal(res.stdout, 'foo\nbar\n')
 
-
     // --locale
     // After reading UAX #29 again, I still don't think this changes
     // anything visible.

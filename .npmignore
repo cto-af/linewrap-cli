@@ -3,3 +3,4 @@
 .eslintrc.cjs
 coverage/
 test/
+.github/
