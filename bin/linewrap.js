@@ -23,7 +23,7 @@ const config = {
     },
     ellipsis: {
       type: 'string',
-      default: '\u{2026}',
+      default: LineWrap.DEFAULT_OPTIONS.ellipsis,
       argumentName: 'string',
       description: 'What string to use when a word is longer than the max width, and in overflow mode "clip"',
     },
@@ -41,7 +41,7 @@ const config = {
     html: {type: 'boolean', description: 'escape output for HTML'},
     hyphen: {
       type: 'string',
-      default: '-',
+      default: LineWrap.DEFAULT_OPTIONS.hyphen,
       argumentName: 'string',
       description: 'What string to use when a word is longer than the max width, and in overflow mode "any"',
     },
@@ -54,23 +54,26 @@ const config = {
     },
     indentChar: {
       type: 'string',
-      default: ' ',
+      default: LineWrap.DEFAULT_OPTIONS.indentChar,
       argumentName: 'string',
       description: 'if indent is a number, that many indentChars will be inserted before each line',
     },
     indentEmpty: {
       type: 'boolean',
-      default: false,
+      default: LineWrap.DEFAULT_OPTIONS.indentEmpty,
       description: 'if the input string is empty, should we still indent?',
     },
     isNewline: {
       type: 'string',
+      default: LineWrap.DEFAULT_OPTIONS.isNewline.source,
       argumentName: 'regex',
       description: 'a regular expression to replace newlines in the input.  Empty to leave newlines in place.',
     },
     locale: {
       short: 'l',
       type: 'string',
+      // This would make the tests depend on current locale:
+      // default: LineWrap.DEFAULT_OPTIONS.locale,
       argumentName: 'iso location',
       description: 'locale for grapheme segmentation.  Has very little effect at the moment',
     },
@@ -83,11 +86,12 @@ const config = {
     newlineReplacement: {
       type: 'string',
       argumentName: 'string',
-      default: ' ',
+      default: LineWrap.DEFAULT_OPTIONS.newlineReplacement,
       description: 'when isNewline matches, replace with this string',
     },
     outdentFirst: {
       type: 'boolean',
+      default: !LineWrap.DEFAULT_OPTIONS.indentFirst,
       description: 'Do not indent the first output line',
     },
     outFile: {
