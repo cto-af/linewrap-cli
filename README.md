@@ -52,6 +52,8 @@ Options:
                                  indent? Default: false
   --isNewline <regex>            a regular expression to replace newlines in the
                                  input.  Empty to leave newlines in place.
+                                 Default: "[^\\S\\r\\n\\v\\f\\x85\\u2028\
+                                 \u2029]*[\\r\\n\\v\\f\\x85\\u2028\\u2029]+\\s*"
   -l,--locale <iso location>     locale for grapheme segmentation.  Has very
                                  little effect at the moment
   --newline <string>             how to separate the lines of output Default:
@@ -59,7 +61,8 @@ Options:
   --newlineReplacement <string>  when isNewline matches, replace with this
                                  string Default: " "
   -o,--outFile <file>            output to a file instead of stdout
-  --outdentFirst                 Do not indent the first output line
+  --outdentFirst                 Do not indent the first output line Default:
+                                 false
   --overflow <style>             what to do with words that are longer than
                                  width. (choices: "visible", "clip",
                                  "anywhere") Default: "visible"
@@ -68,7 +71,8 @@ Options:
                                  be specified multiple times. Default: []
   -v,--verbose                   turn on super-verbose information.  Not useful
                                  for anything but debugging underlying libraries
-  -w,--width <columns>           maximum line length Default: "80"
+  -w,--width <columns>           maximum line length Default: "(your terminal
+                                 width or 80)"
 ```
 
 ## Examples
