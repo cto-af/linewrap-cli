@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
+import {inspect, promisify} from 'util'
 import {LineWrap} from '@cto.af/linewrap'
 import {fileURLToPath} from 'url'
 import fs from 'fs'
 import os from 'os'
 import {parseArgsWithHelp} from 'minus-h'
-import {promisify} from 'util'
 
 /**
  * @type {Parameters<generateHelp>[0]}
@@ -21,19 +21,70 @@ const config = {
       description: 'encoding for files read or written.  stdout is always in the default encoding.',
       choices: ['ascii', 'utf8', 'utf-8', 'utf16le', 'ucs2', 'ucs-2', 'base64', 'base64url', 'latin1', 'binary', 'hex'],
     },
+    ellipsis: {
+      type: 'string',
+      default: '\u{2026}',
+      argumentName: 'string',
+      description: 'What string to use when a word is longer than the max width, and in overflow mode "clip"',
+    },
+    example7: {
+      short: '7',
+      type: 'boolean',
+      description: 'turn on the extra rules from Example 7 of UAX #14',
+    },
+    firstCol: {
+      short: 'c',
+      type: 'string',
+      default: 'NaN',
+      description: 'If outdentFirst is specified, how many columns was the first line already indented?  If NaN, use the indent width, in graphemes.  If outdentFirst is false, this is ignored',
+    },
     html: {type: 'boolean', description: 'escape output for HTML'},
+    hyphen: {
+      type: 'string',
+      default: '-',
+      argumentName: 'string',
+      description: 'What string to use when a word is longer than the max width, and in overflow mode "any"',
+    },
     indent: {
       short: 'i',
       type: 'string',
       default: '',
       argumentName: 'string|number',
-      description: 'indent each line with this text.  If a number, indent that many spaces.',
+      description: 'indent each line with this text.  If a number, indent that many spaces',
+    },
+    indentChar: {
+      type: 'string',
+      default: ' ',
+      argumentName: 'string',
+      description: 'if indent is a number, that many indentChars will be inserted before each line',
+    },
+    indentEmpty: {
+      type: 'boolean',
+      default: false,
+      description: 'if the input string is empty, should we still indent?',
+    },
+    isNewline: {
+      type: 'string',
+      argumentName: 'regex',
+      description: 'a regular expression to replace newlines in the input.  Empty to leave newlines in place.',
     },
     locale: {
       short: 'l',
       type: 'string',
       argumentName: 'iso location',
       description: 'locale for grapheme segmentation.  Has very little effect at the moment',
+    },
+    newline: {
+      type: 'string',
+      default: os.EOL,
+      argumentName: 'string',
+      description: 'how to separate the lines of output',
+    },
+    newlineReplacement: {
+      type: 'string',
+      argumentName: 'string',
+      default: ' ',
+      description: 'when isNewline matches, replace with this string',
     },
     outdentFirst: {
       type: 'boolean',
@@ -59,6 +110,11 @@ const config = {
       default: [],
       description: 'wrap this chunk of text.  If used, stdin is not processed unless "-" is used explicitly.  Can be specified multiple times.',
     },
+    verbose: {
+      short: 'v',
+      type: 'boolean',
+      description: 'turn on super-verbose information.  Not useful for anything but debugging underlying libraries',
+    },
     width: {
       short: 'w',
       type: 'string',
@@ -69,7 +125,7 @@ const config = {
   },
   allowPositionals: true,
   argumentName: '...file',
-  argumentDescription: 'files to wrap and concatenate.  Use "-" for stdin.',
+  argumentDescription: 'files to wrap and concatenate.  Use "-" for stdin. Default: "-"',
   description: 'Wrap some text, either from file, stdin, or given on the command line.  Each chunk of text is wrapped independently from one another, and streamed to stdout (or an outFile, if given).  Command line arguments with -t/--text are processed before files.',
 }
 
@@ -130,6 +186,7 @@ export async function main(
     positionals.push('-')
   }
 
+  // Always a valid string, due to choices enforcement
   /** @type synbol */
   const overflow = {
     visible: LineWrap.OVERFLOW_VISIBLE,
@@ -141,20 +198,38 @@ export async function main(
     fs.createWriteStream(values.outFile, values.encoding) :
     process.stdout // Don't set encoding, will confuse terminal.
 
-  const w = new LineWrap({
+  /** @type {ConstructorParameters<typeof LineWrap>[0]} */
+  const opts = {
     escape: values.html ? htmlEscape : s => s,
-    width: parseInt(values.width, 10),
-    locale: values.locale,
+    ellipsis: values.ellipsis,
+    example7: Boolean(values.example7),
+    firstCol: parseInt(values.firstCol, 10),
+    hyphen: values.hyphen,
     indent: parseInt(values.indent, 10) || values.indent,
+    indentChar: values.indentChar,
+    indentEmpty: values.indentEmpty,
     indentFirst: !values.outdentFirst,
-    newline: os.EOL,
+    locale: values.locale,
+    newline: values.newline,
+    newlineReplacement: values.newlineReplacement,
     overflow,
     trim: !values.noTrim,
-  })
+    verbose: values.verbose,
+    width: parseInt(values.width, 10),
+  }
+  if (typeof values.isNewline === 'string') {
+    opts.isNewline = (values.isNewline.length === 0) ?
+      null :
+      new RegExp(values.isNewline, 'gu')
+  }
+  if (values.verbose) {
+    process.stdout.write(inspect(opts))
+  }
+  const w = new LineWrap(opts)
 
   for (const t of values.text) {
     outstream.write(w.wrap(t))
-    outstream.write(os.EOL)
+    outstream.write(values.newline)
   }
 
   for (const f of positionals) {
@@ -163,7 +238,7 @@ export async function main(
       await fs.promises.readFile(f, values.encoding)
 
     outstream.write(w.wrap(t))
-    outstream.write(os.EOL)
+    outstream.write(values.newline)
   }
 
   // Be careful to wait for the file to close, to ensure tests run

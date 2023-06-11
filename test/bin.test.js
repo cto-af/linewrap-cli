@@ -1,4 +1,5 @@
 import {exec, spawn} from './harness.js'
+import {Buffer} from 'buffer'
 import {EOL} from 'os'
 import assert from 'assert/strict'
 import {fileURLToPath} from 'url'
@@ -16,30 +17,55 @@ const HELP = [
   'before files.',
   '',
   'Arguments:',
-  '  ...file                      files to wrap and concatenate.  Use "-" for',
-  '                               stdin.',
+  '  ...file                        files to wrap and concatenate.  Use "-" for',
+  '                                 stdin. Default: "-"',
   '',
   'Options:',
-  '  -e,--encoding <encoding>     encoding for files read or written.  stdout is',
-  '                               always in the default encoding. (choices:',
-  '                               "ascii", "utf8", "utf-8", "utf16le", "ucs2",',
-  '                               "ucs-2", "base64", "base64url", "latin1",',
-  '                               "binary", "hex") Default: "utf8"',
-  '  -h,--help                    display help for command',
-  '  --html                       escape output for HTML',
-  '  -i,--indent <string|number>  indent each line with this text.  If a number,',
-  '                               indent that many spaces. Default: ""',
-  '  -l,--locale <iso location>   locale for grapheme segmentation.  Has very',
-  '                               little effect at the moment',
-  '  -o,--outFile <file>          output to a file instead of stdout',
-  '  --outdentFirst               Do not indent the first output line',
-  '  --overflow <style>           what to do with words that are longer than width.',
-  '                               (choices: "visible", "clip", "anywhere") Default:',
-  '                               "visible"',
-  '  -t,--text <value>            wrap this chunk of text.  If used, stdin is not',
-  '                               processed unless "-" is used explicitly.  Can be',
-  '                               specified multiple times. Default: []',
-  '  -w,--width <columns>         maximum line length Default: "80"',
+  '  -7,--example7                  turn on the extra rules from Example 7 of UAX',
+  '                                 #14',
+  '  -c,--firstCol <value>          If outdentFirst is specified, how many columns',
+  '                                 was the first line already indented?  If NaN,',
+  '                                 use the indent width, in graphemes.  If',
+  '                                 outdentFirst is false, this is ignored Default:',
+  '                                 "NaN"',
+  '  -e,--encoding <encoding>       encoding for files read or written.  stdout is',
+  '                                 always in the default encoding. (choices:',
+  '                                 "ascii", "utf8", "utf-8", "utf16le", "ucs2",',
+  '                                 "ucs-2", "base64", "base64url", "latin1",',
+  '                                 "binary", "hex") Default: "utf8"',
+  '  --ellipsis <string>            What string to use when a word is longer than',
+  '                                 the max width, and in overflow mode "clip" ',
+  '                                 Default: "…"',
+  '  -h,--help                      display help for command',
+  '  --html                         escape output for HTML',
+  '  --hyphen <string>              What string to use when a word is longer than',
+  '                                 the max width, and in overflow mode "any" ',
+  '                                 Default: "-"',
+  '  -i,--indent <string|number>    indent each line with this text.  If a number,',
+  '                                 indent that many spaces Default: ""',
+  '  --indentChar <string>          if indent is a number, that many indentChars',
+  '                                 will be inserted before each line Default: " "',
+  '  --indentEmpty                  if the input string is empty, should we still',
+  '                                 indent? Default: false',
+  '  --isNewline <regex>            a regular expression to replace newlines in the',
+  '                                 input.  Empty to leave newlines in place.',
+  '  -l,--locale <iso location>     locale for grapheme segmentation.  Has very',
+  '                                 little effect at the moment',
+  '  --newline <string>             how to separate the lines of output Default:',
+  '                                 "\\n"',
+  '  --newlineReplacement <string>  when isNewline matches, replace with this',
+  '                                 string Default: " "',
+  '  -o,--outFile <file>            output to a file instead of stdout',
+  '  --outdentFirst                 Do not indent the first output line',
+  '  --overflow <style>             what to do with words that are longer than',
+  '                                 width. (choices: "visible", "clip",',
+  '                                 "anywhere") Default: "visible"',
+  '  -t,--text <value>              wrap this chunk of text.  If used, stdin is not',
+  '                                 processed unless "-" is used explicitly.  Can',
+  '                                 be specified multiple times. Default: []',
+  '  -v,--verbose                   turn on super-verbose information.  Not useful',
+  '                                 for anything but debugging underlying libraries',
+  '  -w,--width <columns>           maximum line length Default: "80"',
   '',
 ].join(EOL)
 
@@ -81,7 +107,7 @@ describe('cli', () => {
   })
 
   it('reads and writes files', async() => {
-    const outFile = path.join(tmpDir, 'foo')
+    const outFile = path.join(tmpDir, 'rwFiles')
     await exec({main, stdin: 'foo bar'}, '-w', '4', '-o', outFile)
     const contents = await fs.readFile(outFile, 'utf8')
     assert.equal(contents, [
@@ -105,6 +131,85 @@ describe('cli', () => {
       'bar',
       '',
     ].join(EOL))
+  })
+
+  it('has all of the options hooked up', async() => {
+    const outFile = path.join(tmpDir, 'options')
+    // --encoding
+    await exec({main, stdin: Buffer.from('foo bar', 'utf16le')}, '-w', '4', '-e', 'utf16le', '-o', outFile)
+    const contents = await fs.readFile(outFile, 'utf16le')
+    assert.equal(contents, [
+      'foo',
+      'bar',
+      '',
+    ].join(EOL))
+
+    // --ellipsis
+    let res = await exec(
+      {main, stdin: 'foo'}, '--ellipsis', '=', '--overflow', 'clip', '--width', '2'
+    )
+    assert.equal(res.stdout, 'f=\n')
+
+    // --example7
+    // × C694 × 002E × 0020 ÷ 0041 × 002E ÷ 0034 × 0020 ÷ BABB ÷
+    res = await exec(
+      {main, stdin: '\uC694\u002e\u0020\u0041\u002e\u0034\u0020\uBABB'}, '-w', '1', '-7'
+    )
+    // Fails without -7.
+    assert.equal(res.stdout, '\uC694\u002e\n\u0041\u002e\n\u0034\n\uBABB\n')
+
+    // --firstCol
+    // --indent
+    // --outdentFirst
+    res = await exec(
+      {main, stdin: 'foo bar baz'}, '-w', '7', '-i', '2', '--outdentFirst', '-c', '0'
+    )
+    assert.equal(res.stdout, 'foo bar\n  baz\n')
+
+    // --hyphen
+    res = await exec(
+      {main, stdin: 'foo'}, '--hyphen', '=', '--overflow', 'anywhere', '--width', '2'
+    )
+    assert.equal(res.stdout, 'f=\no=\no\n')
+
+    // --indentChar
+    res = await exec(
+      {main, stdin: 'foo bar baz'}, '-w', '8', '-i', '2', '--indentChar', '12'
+    )
+    assert.equal(res.stdout, '1212foo\n1212bar\n1212baz\n')
+
+    // --indentEmpty
+    res = await exec(
+      {main, stdin: ''}, '-i', '2', '--indentEmpty'
+    )
+    assert.equal(res.stdout, '  \n')
+
+    // --isNewline
+    // --newlineReplacement
+    res = await exec(
+      {main, stdin: 'foobar'}, '--isNewline', 'o+', '--newlineReplacement', ' 99 ', '-w', '1'
+    )
+    assert.equal(res.stdout, 'f\n99\nbar\n')
+
+    res = await exec(
+      {main, stdin: 'foo\nbar'}, '--isNewline', ''
+    )
+    assert.equal(res.stdout, 'foo\nbar\n')
+
+
+    // --locale
+    // After reading UAX #29 again, I still don't think this changes
+    // anything visible.
+
+    // --newline
+    res = await exec(
+      {main, stdin: 'foo bar'}, '--newline', '=', '-w', '1'
+    )
+    assert.equal(res.stdout, 'foo=bar=')
+
+    // --verbose
+    res = await exec({main}, '-t', '', '-v')
+    assert.notEqual('res.stdout', 'foo\n')
   })
 
   it('spawns', async() => {
