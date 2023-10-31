@@ -26,14 +26,14 @@
   "license": "MIT",
   "repository": "cto-af/linewrap-cli",
   "dependencies": {
-    "@cto.af/linewrap": "1.0.4",
-    "minus-h": "1.1.1"
+    "@cto.af/linewrap": "1.1.0",
+    "minus-h": "1.2.0"
   },
   "devDependencies": {
-    "@cto.af/eslint-config": "1.1.2",
-    "@types/node": "20.3.1",
-    "c8": "8.0.0",
-    "eslint": "8.43.0",
+    "@cto.af/eslint-config": "3.0.2",
+    "@types/node": "20.8.10",
+    "c8": "8.0.1",
+    "eslint": "8.52.0",
     "mocha": "10.2.0"
   },
   "engines": {
