@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-import {inspect, promisify} from 'util'
-import {LineWrap} from '@cto.af/linewrap'
-import {fileURLToPath} from 'url'
-import fs from 'fs'
-import os from 'os'
-import {parseArgsWithHelp} from 'minus-h'
+import {inspect, promisify} from 'util';
+import {LineWrap} from '@cto.af/linewrap';
+import {fileURLToPath} from 'url';
+import fs from 'fs';
+import os from 'os';
+import {parseArgsWithHelp} from 'minus-h';
 
 /**
  * @type {Parameters<generateHelp>[0]}
@@ -131,7 +131,7 @@ const config = {
   argumentName: '...file',
   argumentDescription: 'files to wrap and concatenate.  Use "-" for stdin. Default: "-"',
   description: 'Wrap some text, either from file, stdin, or given on the command line.  Each chunk of text is wrapped independently from one another, and streamed to stdout (or an outFile, if given).  Command line arguments with -t/--text are processed before files.',
-}
+};
 
 /**
  * Read stdin to completion with the configured encoding.
@@ -140,13 +140,13 @@ const config = {
  */
 function readStdin(opts, stream) {
   // Below, d will be a string
-  stream.setEncoding(opts.encoding)
+  stream.setEncoding(opts.encoding);
   return new Promise((resolve, reject) => {
-    let s = ''
-    stream.on('data', d => (s += d))
-    stream.on('end', () => resolve(s))
-    stream.on('error', reject)
-  })
+    let s = '';
+    stream.on('data', d => (s += d));
+    stream.on('end', () => resolve(s));
+    stream.on('error', reject);
+  });
 }
 
 const ESCAPES = {
@@ -156,7 +156,7 @@ const ESCAPES = {
   '"': '&quot;',
   "'": '&apos;',
   '\xA0': '&nbsp;',
-}
+};
 
 /**
  * Escape HTML
@@ -166,12 +166,12 @@ const ESCAPES = {
  * @private
  */
 function htmlEscape(str) {
-  return str.replace(/[&<>\xA0]/g, m => ESCAPES[m])
+  return str.replace(/[&<>\xA0]/g, m => ESCAPES[m]);
 }
 
 const {
   exit, stdin, stdout, stderr,
-} = process
+} = process;
 
 export async function main(
   extraConfig,
@@ -184,10 +184,10 @@ export async function main(
   }, {
     width: config.options.width.default,
     ...options,
-  })
+  });
 
   if ((values.text.length === 0) && (positionals.length === 0)) {
-    positionals.push('-')
+    positionals.push('-');
   }
 
   // Always a valid string, due to choices enforcement
@@ -196,11 +196,11 @@ export async function main(
     visible: LineWrap.OVERFLOW_VISIBLE,
     clip: LineWrap.OVERFLOW_CLIP,
     anywhere: LineWrap.OVERFLOW_ANYWHERE,
-  }[values.overflow]
+  }[values.overflow];
 
   const outstream = values.outFile ?
     fs.createWriteStream(values.outFile, values.encoding) :
-    process.stdout // Don't set encoding, will confuse terminal.
+    process.stdout; // Don't set encoding, will confuse terminal.
 
   /** @type {ConstructorParameters<typeof LineWrap>[0]} */
   const opts = {
@@ -220,39 +220,39 @@ export async function main(
     trim: !values.noTrim,
     verbose: values.verbose,
     width: parseInt(values.width, 10),
-  }
+  };
   if (typeof values.isNewline === 'string') {
     opts.isNewline = (values.isNewline.length === 0) ?
       null :
-      new RegExp(values.isNewline, 'gu')
+      new RegExp(values.isNewline, 'gu');
   }
   if (values.verbose) {
-    process.stdout.write(inspect(opts))
+    process.stdout.write(inspect(opts));
   }
-  const w = new LineWrap(opts)
+  const w = new LineWrap(opts);
 
   for (const t of values.text) {
-    outstream.write(w.wrap(t))
-    outstream.write(values.newline)
+    outstream.write(w.wrap(t));
+    outstream.write(values.newline);
   }
 
   for (const f of positionals) {
     const t = f === '-' ?
       await readStdin(values, process.stdin) :
-      await fs.promises.readFile(f, values.encoding)
+      await fs.promises.readFile(f, values.encoding);
 
-    outstream.write(w.wrap(t))
-    outstream.write(values.newline)
+    outstream.write(w.wrap(t));
+    outstream.write(values.newline);
   }
 
   // Be careful to wait for the file to close, to ensure tests run
   // correctly.
-  await promisify(outstream.end.bind(outstream))()
+  await promisify(outstream.end.bind(outstream))();
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   main().catch(e => {
-    console.error(e)
-    process.exit(1)
-  })
+    console.error(e);
+    process.exit(1);
+  });
 }
