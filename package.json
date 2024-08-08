@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "c8 mocha",
-    "lint": "eslint . --ext js,cjs",
+    "lint": "eslint .",
     "build": "npm run lint && npm run test && npm pack --dry-run"
   },
   "keywords": [
@@ -26,17 +26,18 @@
   "license": "MIT",
   "repository": "cto-af/linewrap-cli",
   "dependencies": {
-    "@cto.af/linewrap": "2.0.0",
-    "minus-h": "1.2.1"
+    "@cto.af/linewrap": "2.1.0",
+    "minus-h": "2.1.0"
   },
   "devDependencies": {
-    "@cto.af/eslint-config": "3.1.0",
-    "@types/node": "20.11.25",
-    "c8": "9.1.0",
-    "eslint": "8.57.0",
-    "mocha": "10.3.0"
+    "@cto.af/eslint-config": "4.1.5",
+    "@types/node": "22.1.0",
+    "c8": "10.1.2",
+    "eslint": "9.8.0",
+    "eslint-plugin-mocha": "10.5.0",
+    "mocha": "10.7.0"
   },
-  "packageManager": "pnpm@8.15.4",
+  "packageManager": "pnpm@9.7.0",
   "engines": {
     "node": ">= 18"
   }

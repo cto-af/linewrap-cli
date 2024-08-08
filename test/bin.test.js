@@ -73,15 +73,24 @@ const HELP = [
 ].join(EOL);
 
 let argv1 = null;
-before('create tempdir', async() => {
-  const prefix = new URL('ctoaf-linewrap-', import.meta.url);
-  tmpDir = await fs.mkdtemp(fileURLToPath(prefix));
-  // eslint-disable-next-line prefer-destructuring
-  argv1 = process.argv[1];
-  process.argv[1] = 'linewrap.js';
-});
 
 describe('cli', () => {
+  before('create tempdir', async() => {
+    const prefix = new URL('ctoaf-linewrap-', import.meta.url);
+    tmpDir = await fs.mkdtemp(fileURLToPath(prefix));
+    argv1 = process.argv[1];
+    process.argv[1] = 'linewrap.js';
+  });
+
+  after('remove tempdir', async() => {
+    process.argv[1] = argv1;
+    if (tmpDir) {
+      await fs.rm(tmpDir, {
+        recursive: true,
+      });
+    }
+  });
+
   it('generates help', async() => {
     const res = await exec({main, code: 64}, '-h');
     assert.equal(res.stderr, HELP);
@@ -223,13 +232,4 @@ describe('cli', () => {
     const res2 = await spawn({main: mainJs, code: 1}, invalidInputFile);
     assert.match(res2.stderr, /ENOENT/);
   });
-});
-
-after('remove tempdir', async() => {
-  process.argv[1] = argv1;
-  if (tmpDir) {
-    await fs.rm(tmpDir, {
-      recursive: true,
-    });
-  }
 });
