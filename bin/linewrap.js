@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
 
 import {inspect, promisify} from 'util';
 import {LineWrap} from '@cto.af/linewrap';

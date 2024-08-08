@@ -14,7 +14,6 @@ class ExitError extends Error {
 
 // Record things written through a stream.  Only works for 16kb chunks.
 class Record extends Transform {
-  // eslint-disable-next-line class-methods-use-this
   _transform(chunk, encoding, callback) {
     callback(null, chunk);
   }
