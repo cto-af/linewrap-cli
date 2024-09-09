@@ -7,6 +7,10 @@ import fs from 'fs';
 import os from 'os';
 import {parseArgsWithHelp} from 'minus-h';
 
+export const DEFAULTS = {
+  width: process.stdout.columns ?? 80,
+};
+
 /**
  * @type {Parameters<generateHelp>[0]}
  */
@@ -121,7 +125,7 @@ const config = {
     width: {
       short: 'w',
       type: 'string',
-      default: String(process.stdout.columns ?? 80),
+      default: String(DEFAULTS.width),
       argumentName: 'columns',
       description: 'maximum line length',
     },
@@ -177,11 +181,12 @@ export async function main(
   options,
   process = {exit, stdin, stdout, stderr}
 ) {
+  config.options.width.default = String(DEFAULTS.width);
   const {values, positionals} = parseArgsWithHelp({
     ...config,
     ...extraConfig,
   }, {
-    width: config.options.width.default,
+    width: DEFAULTS.width,
     ...options,
   });
 
