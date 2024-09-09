@@ -4,9 +4,10 @@ import {EOL} from 'os';
 import assert from 'assert/strict';
 import {fileURLToPath} from 'url';
 import fs from 'fs/promises';
-import {main} from '../bin/linewrap.js';
+import {main, DEFAULTS} from '../bin/linewrap.js';
 import path from 'path';
 
+DEFAULTS.width = 80;
 let tmpDir = null;
 const HELP = [
   'Usage: linewrap [options] [...file]',
@@ -68,7 +69,7 @@ const HELP = [
   '                                 be specified multiple times. Default: []',
   '  -v,--verbose                   turn on super-verbose information.  Not useful',
   '                                 for anything but debugging underlying libraries',
-  '  -w,--width <columns>           maximum line length Default: "80"',
+  `  -w,--width <columns>           maximum line length Default: "80"`,
   '',
 ].join(EOL);
 
@@ -92,7 +93,7 @@ describe('cli', () => {
   });
 
   it('generates help', async() => {
-    const res = await exec({main, code: 64}, '-h');
+    const res = await exec({main, code: 64}, '-h', '-w', '80');
     assert.equal(res.stderr, HELP);
   });
 
