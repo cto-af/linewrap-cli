@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import {inspect, promisify} from 'util';
+import {inspect, promisify} from 'node:util';
 import {LineWrap} from '@cto.af/linewrap';
-import {fileURLToPath} from 'url';
-import fs from 'fs';
-import os from 'os';
+import {fileURLToPath} from 'node:url';
+import fs from 'node:fs';
+import os from 'node:os';
 import {parseArgsWithHelp} from 'minus-h';
 
 export const DEFAULTS = {
@@ -29,11 +29,6 @@ const config = {
       default: LineWrap.DEFAULT_OPTIONS.ellipsis,
       argumentName: 'string',
       description: 'What string to use when a word is longer than the max width, and in overflow mode "clip"',
-    },
-    example7: {
-      short: '7',
-      type: 'boolean',
-      description: 'turn on the extra rules from Example 7 of UAX #14',
     },
     firstCol: {
       short: 'c',
@@ -210,7 +205,6 @@ export async function main(
   const opts = {
     escape: values.html ? htmlEscape : s => s,
     ellipsis: values.ellipsis,
-    example7: Boolean(values.example7),
     firstCol: parseInt(values.firstCol, 10),
     hyphen: values.hyphen,
     indent: parseInt(values.indent, 10) || values.indent,
@@ -256,6 +250,7 @@ export async function main(
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   main().catch(e => {
+    // eslint-disable-next-line no-console
     console.error(e);
     process.exit(1);
   });

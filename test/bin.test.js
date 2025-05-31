@@ -1,11 +1,13 @@
+import {DEFAULTS, main} from '../bin/linewrap.js';
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import {exec, spawn} from './harness.js';
-import {Buffer} from 'buffer';
-import {EOL} from 'os';
-import assert from 'assert/strict';
-import {fileURLToPath} from 'url';
-import fs from 'fs/promises';
-import {main, DEFAULTS} from '../bin/linewrap.js';
-import path from 'path';
+import {Buffer} from 'node:buffer';
+import {EOL} from 'node:os';
+import assert from 'node:assert/strict';
+import {fileURLToPath} from 'node:url';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {test} from 'node:test';
 
 DEFAULTS.width = 80;
 let tmpDir = null;
@@ -22,8 +24,6 @@ const HELP = [
   '                                 stdin. Default: "-"',
   '',
   'Options:',
-  '  -7,--example7                  turn on the extra rules from Example 7 of UAX',
-  '                                 #14',
   '  -c,--firstCol <value>          If outdentFirst is specified, how many columns',
   '                                 was the first line already indented?  If NaN,',
   '                                 use the indent width, in graphemes.  If',
@@ -69,21 +69,19 @@ const HELP = [
   '                                 be specified multiple times. Default: []',
   '  -v,--verbose                   turn on super-verbose information.  Not useful',
   '                                 for anything but debugging underlying libraries',
-  `  -w,--width <columns>           maximum line length Default: "80"`,
+  '  -w,--width <columns>           maximum line length Default: "80"',
   '',
 ].join(EOL);
 
 let argv1 = null;
+const prefix = new URL('ctoaf-linewrap-', import.meta.url);
+tmpDir = await fs.mkdtemp(fileURLToPath(prefix));
+// eslint-disable-next-line prefer-destructuring
+argv1 = process.argv[1];
+process.argv[1] = 'linewrap.js';
 
-describe('cli', () => {
-  before('create tempdir', async() => {
-    const prefix = new URL('ctoaf-linewrap-', import.meta.url);
-    tmpDir = await fs.mkdtemp(fileURLToPath(prefix));
-    argv1 = process.argv[1];
-    process.argv[1] = 'linewrap.js';
-  });
-
-  after('remove tempdir', async() => {
+test('cli', t => {
+  t.after(async() => {
     process.argv[1] = argv1;
     if (tmpDir) {
       await fs.rm(tmpDir, {
@@ -92,12 +90,12 @@ describe('cli', () => {
     }
   });
 
-  it('generates help', async() => {
+  test('generates help', async() => {
     const res = await exec({main, code: 64}, '-h', '-w', '80');
     assert.equal(res.stderr, HELP);
   });
 
-  it('reads stdin', async() => {
+  test('reads stdin', async() => {
     const res = await exec({main, stdin: 'foo bar'}, '-w', '4');
     assert.equal(res.stdout, [
       'foo',
@@ -106,7 +104,7 @@ describe('cli', () => {
     ].join(EOL));
   });
 
-  it('html escapes', async() => {
+  test('html escapes', async() => {
     const res = await exec({main, stdin: 'foo <b>bar</b>'}, '-w', '11', '--html');
     assert.equal(res.stdout, [
       'foo',
@@ -115,11 +113,11 @@ describe('cli', () => {
     ].join(EOL));
   });
 
-  it('deals with bad overflow types', async() => {
+  test('deals with bad overflow types', async() => {
     await exec({main, code: 64}, '--overflow', 'foo');
   });
 
-  it('reads and writes files', async() => {
+  test('reads and writes files', async() => {
     const outFile = path.join(tmpDir, 'rwFiles');
     await exec({main, stdin: 'foo bar'}, '-w', '4', '-o', outFile);
     const contents = await fs.readFile(outFile, 'utf8');
@@ -137,7 +135,7 @@ describe('cli', () => {
     ].join(EOL));
   });
 
-  it('handles inputs on the cli', async() => {
+  test('handles inputs on the cli', async() => {
     const res = await exec({main}, '-w', '4', '-t', 'foo bar');
     assert.equal(res.stdout, [
       'foo',
@@ -146,7 +144,7 @@ describe('cli', () => {
     ].join(EOL));
   });
 
-  it('has all of the options hooked up', async() => {
+  test('has all of the options hooked up', async() => {
     const outFile = path.join(tmpDir, 'options');
     // --encoding
     await exec({main, stdin: Buffer.from('foo bar', 'utf16le')}, '-w', '4', '-e', 'utf16le', '-o', outFile);
@@ -166,10 +164,8 @@ describe('cli', () => {
     // --example7
     // × C694 × 002E × 0020 ÷ 0041 × 002E ÷ 0034 × 0020 ÷ BABB ÷
     res = await exec(
-      {main, stdin: '\uC694\u002e\u0020\u0041\u002e\u0034\u0020\uBABB'}, '-w', '1', '-7'
+      {main, stdin: '\uC694\u002e\u0020\u0041\u002e\u0034\u0020\uBABB'}, '-w', '1'
     );
-    // Fails without -7.
-    assert.equal(res.stdout, '\uC694\u002e\n\u0041\u002e\n\u0034\n\uBABB\n');
 
     // --firstCol
     // --indent
@@ -224,7 +220,7 @@ describe('cli', () => {
     assert.notEqual('res.stdout', 'foo\n');
   });
 
-  it('spawns', async() => {
+  test('spawns', async() => {
     const mainJs = fileURLToPath(new URL('../bin/linewrap.js', import.meta.url));
     const res = await spawn({main: mainJs, code: 64}, '-h');
     assert.equal(res.stderr, HELP);
