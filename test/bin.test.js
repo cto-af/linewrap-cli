@@ -1,5 +1,4 @@
 import {DEFAULTS, main} from '../bin/linewrap.js';
-// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import {exec, spawn} from './harness.js';
 import {Buffer} from 'node:buffer';
 import {EOL} from 'node:os';
