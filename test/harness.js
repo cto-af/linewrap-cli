@@ -1,6 +1,6 @@
-import {Transform} from 'stream';
-import assert from 'assert/strict';
-import {spawn as spwn} from 'child_process';
+import {Transform} from 'node:stream';
+import assert from 'node:assert/strict';
+import {spawn as spwn} from 'node:child_process';
 
 // This is pulled out so that it can eventually be a separate project, once
 // I figure out a better API for how to call main()
@@ -14,7 +14,8 @@ class ExitError extends Error {
 
 // Record things written through a stream.  Only works for 16kb chunks.
 class Record extends Transform {
-  _transform(chunk, encoding, callback) {
+  // eslint-disable-next-line class-methods-use-this
+  _transform(chunk, _encoding, callback) {
     callback(null, chunk);
   }
 }
