@@ -47,10 +47,6 @@ const HELP = [
   '                                 will be inserted before each line Default: " "',
   '  --indentEmpty                  if the input string is empty, should we still',
   '                                 indent? Default: false',
-  '  --isNewline <regex>            a regular expression to replace newlines in the',
-  '                                 input.  Empty to leave newlines in place.',
-  '                                 Default: "[^\\\\S\\\\r\\\\n\\\\v\\\\f\\\\x85\\\\u2028\\',
-  '                                 \\u2029]*[\\\\r\\\\n\\\\v\\\\f\\\\x85\\\\u2028\\\\u2029]+\\\\s*"',
   '  -l,--locale <iso location>     locale for grapheme segmentation.  Has very',
   '                                 little effect at the moment',
   '  --newline <string>             how to separate the lines of output Default:',
@@ -191,18 +187,6 @@ test('cli', async t => {
       {main, stdin: ''}, '-i', '2', '--indentEmpty'
     );
     assert.equal(res.stdout, '  \n');
-
-    // --isNewline
-    // --newlineReplacement
-    res = await exec(
-      {main, stdin: 'foobar'}, '--isNewline', 'o+', '--newlineReplacement', ' 99 ', '-w', '1'
-    );
-    assert.equal(res.stdout, 'f\n99\nbar\n');
-
-    res = await exec(
-      {main, stdin: 'foo\nbar'}, '--isNewline', ''
-    );
-    assert.equal(res.stdout, 'foo\nbar\n');
 
     // --locale
     // After reading UAX #29 again, I still don't think this changes

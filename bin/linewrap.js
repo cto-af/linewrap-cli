@@ -61,12 +61,6 @@ const config = {
       default: LineWrap.DEFAULT_OPTIONS.indentEmpty,
       description: 'if the input string is empty, should we still indent?',
     },
-    isNewline: {
-      type: 'string',
-      default: LineWrap.DEFAULT_OPTIONS.isNewline.source,
-      argumentName: 'regex',
-      description: 'a regular expression to replace newlines in the input.  Empty to leave newlines in place.',
-    },
     locale: {
       short: 'l',
       type: 'string',
@@ -219,11 +213,7 @@ export async function main(
     verbose: values.verbose,
     width: parseInt(values.width, 10),
   };
-  if (typeof values.isNewline === 'string') {
-    opts.isNewline = (values.isNewline.length === 0) ?
-      null :
-      new RegExp(values.isNewline, 'gu');
-  }
+
   if (values.verbose) {
     process.stdout.write(inspect(opts));
   }
