@@ -27,7 +27,7 @@
   "repository": "cto-af/linewrap-cli",
   "dependencies": {
     "@cto.af/linewrap": "3.2.0",
-    "minus-h": "3.0.0"
+    "minus-h": "3.0.1"
   },
   "devDependencies": {
     "@cto.af/eslint-config": "6.0.5",
