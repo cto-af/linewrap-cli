@@ -50,10 +50,6 @@ Options:
                                  will be inserted before each line Default: " "
   --indentEmpty                  if the input string is empty, should we still
                                  indent? Default: false
-  --isNewline <regex>            a regular expression to replace newlines in the
-                                 input.  Empty to leave newlines in place.
-                                 Default: "[^\\S\\r\\n\\v\\f\\x85\\u2028\
-                                 \u2029]*[\\r\\n\\v\\f\\x85\\u2028\\u2029]+\\s*"
   -l,--locale <iso location>     locale for grapheme segmentation.  Has very
                                  little effect at the moment
   --newline <string>             how to separate the lines of output Default:
