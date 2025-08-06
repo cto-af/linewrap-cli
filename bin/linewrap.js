@@ -240,7 +240,6 @@ export async function main(
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   main().catch(e => {
-    // eslint-disable-next-line no-console
     console.error(e);
     process.exit(1);
   });

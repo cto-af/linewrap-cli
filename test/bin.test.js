@@ -76,7 +76,7 @@ argv1 = process.argv[1];
 process.argv[1] = 'linewrap.js';
 
 test('cli', async t => {
-  t.after(async() => {
+  t.after(async () => {
     process.argv[1] = argv1;
     if (tmpDir) {
       await fs.rm(tmpDir, {
@@ -85,12 +85,12 @@ test('cli', async t => {
     }
   });
 
-  await test('generates help', async() => {
+  await test('generates help', async () => {
     const res = await exec({main, code: 64}, '-h', '-w', '80');
     assert.equal(res.stderr, HELP);
   });
 
-  await test('reads stdin', async() => {
+  await test('reads stdin', async () => {
     const res = await exec({main, stdin: 'foo bar'}, '-w', '4');
     assert.equal(res.stdout, [
       'foo',
@@ -99,7 +99,7 @@ test('cli', async t => {
     ].join(EOL));
   });
 
-  await test('html escapes', async() => {
+  await test('html escapes', async () => {
     const res = await exec({main, stdin: 'foo <b>bar</b>'}, '-w', '11', '--html');
     assert.equal(res.stdout, [
       'foo',
@@ -108,11 +108,11 @@ test('cli', async t => {
     ].join(EOL));
   });
 
-  await test('deals with bad overflow types', async() => {
+  await test('deals with bad overflow types', async () => {
     await exec({main, code: 64}, '--overflow', 'foo');
   });
 
-  await test('reads and writes files', async() => {
+  await test('reads and writes files', async () => {
     const outFile = path.join(tmpDir, 'rwFiles');
     await exec({main, stdin: 'foo bar'}, '-w', '4', '-o', outFile);
     const contents = await fs.readFile(outFile, 'utf8');
@@ -130,7 +130,7 @@ test('cli', async t => {
     ].join(EOL));
   });
 
-  await test('handles inputs on the cli', async() => {
+  await test('handles inputs on the cli', async () => {
     const res = await exec({main}, '-w', '4', '-t', 'foo bar');
     assert.equal(res.stdout, [
       'foo',
@@ -139,7 +139,7 @@ test('cli', async t => {
     ].join(EOL));
   });
 
-  await test('has all of the options hooked up', async() => {
+  await test('has all of the options hooked up', async () => {
     const outFile = path.join(tmpDir, 'options');
     // --encoding
     await exec({main, stdin: Buffer.from('foo bar', 'utf16le')}, '-w', '4', '-e', 'utf16le', '-o', outFile);
@@ -203,7 +203,7 @@ test('cli', async t => {
     assert.notEqual('res.stdout', 'foo\n');
   });
 
-  await test('spawns', async() => {
+  await test('spawns', async () => {
     const mainJs = fileURLToPath(new URL('../bin/linewrap.js', import.meta.url));
     const res = await spawn({main: mainJs, code: 64}, '-h');
     assert.equal(res.stderr, HELP);
