@@ -1,8 +1,0 @@
-.c8rc
-.editorconfig
-.eslintrc.cjs
-coverage/
-test/
-.github/
-.ncurc
-eslint.config.js
