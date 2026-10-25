@@ -1,0 +1,5 @@
+minimumReleaseAgeExclude:
+  - '@cto.af/linebreak@5.0.0'
+  - '@cto.af/linewrap@5.0.0'
+  - '@cto.af/string-width@6.0.0'
+  - minus-h@5.0.0
